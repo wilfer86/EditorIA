@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editor de Imágenes IA</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Editor de Imágenes IA</h1>
+            <p class="subtitle">Genera y edita imágenes con inteligencia artificial</p>
+        </header>
+
+        <!-- Navegación de pestañas -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="mostrarSeccion('generador')">Generador</button>
+            <button class="tab-btn" onclick="mostrarSeccion('editor')">Editor</button>
+        </div>
+
+        <!-- SECCIÓN GENERADOR -->
+        <section id="generador" class="seccion active">
+            <h2>Generar imagen desde texto</h2>
+            
+            <div class="form-group">
+                <label for="prompt">Describe la imagen que quieres crear:</label>
+                <textarea id="prompt" rows="4" placeholder="Ej: Un gato astronauta en el espacio, estilo realista"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Formato:</label>
+                <div class="formatos">
+                    <button class="formato-btn active" data-ratio="1:1">1:1</button>
+                    <button class="formato-btn" data-ratio="9:16">9:16</button>
+                    <button class="formato-btn" data-ratio="16:9">16:9</button>
+                </div>
+            </div>
+
+            <button class="btn-principal" onclick="generarImagen()">Generar Imagen</button>
+
+            <div id="resultado-generador" class="resultado">
+                <!-- Aquí aparecerá la imagen generada -->
+            </div>
+        </section>
+
+        <!-- SECCIÓN EDITOR -->
+        <section id="editor" class="seccion">
+            <h2>Editar imagen con texto</h2>
+            
+            <div class="form-group">
+                <label for="imagen-input">Sube una imagen:</label>
+                <input type="file" id="imagen-input" accept="image/*">
+            </div>
+
+            <div class="form-group">
+                <label for="prompt-edicion">¿Qué quieres cambiar o agregar?</label>
+                <textarea id="prompt-edicion" rows="3" placeholder="Ej: Cambia el fondo por una playa al atardecer"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Formato de salida:</label>
+                <div class="formatos">
+                    <button class="formato-btn active" data-ratio="1:1">1:1</button>
+                    <button class="formato-btn" data-ratio="9:16">9:16</button>
+                    <button class="formato-btn" data-ratio="16:9">16:9</button>
+                </div>
+            </div>
+
+            <button class="btn-principal" onclick="editarImagen()">Editar Imagen</button>
+
+            <div id="resultado-editor" class="resultado">
+                <!-- Aquí aparecerá la imagen editada -->
+            </div>
+        </section>
+    </div>
+
+    <script>
+    // Cambiar entre pestañas
+    function mostrarSeccion(seccion) {
+        document.querySelectorAll('.seccion').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+
+        document.getElementById(seccion).classList.add('active');
+        event.target.classList.add('active');
+    }
+
+    // Seleccionar formato
+    document.querySelectorAll('.formato-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            this.parentElement.querySelectorAll('.formato-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
+
+    // ======================
+    // GENERAR IMAGEN
+    // ======================
+    async function generarImagen() {
+        const prompt = document.getElementById('prompt').value.trim();
+        const ratio = document.querySelector('#generador .formato-btn.active').dataset.ratio;
+        const resultado = document.getElementById('resultado-generador');
+
+        if (!prompt) {
+            alert('Por favor escribe una descripción');
+            return;
+        }
+
+        // Mostrar cargando
+        resultado.innerHTML = '<p style="color:#d4af37">Generando imagen, espera un momento...</p>';
+
+        const formData = new FormData();
+        formData.append('prompt', prompt);
+        formData.append('ratio', ratio);
+
+        try {
+            const response = await fetch('/api/generar', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                resultado.innerHTML = `<img src="${data.image}" alt="Imagen generada">`;
+            } else {
+                resultado.innerHTML = `<p style="color:#ff6b6b">Error: ${data.error}</p>`;
+            }
+        } catch (error) {
+            resultado.innerHTML = `<p style="color:#ff6b6b">Error de conexión: ${error.message}</p>`;
+        }
+    }
+
+    // ======================
+    // EDITAR IMAGEN
+    // ======================
+    async function editarImagen() {
+        const prompt = document.getElementById('prompt-edicion').value.trim();
+        const ratio = document.querySelector('#editor .formato-btn.active').dataset.ratio;
+        const inputImagen = document.getElementById('imagen-input');
+        const resultado = document.getElementById('resultado-editor');
+
+        if (!prompt) {
+            alert('Por favor escribe qué quieres cambiar');
+            return;
+        }
+
+        if (!inputImagen.files || inputImagen.files.length === 0) {
+            alert('Por favor sube una imagen');
+            return;
+        }
+
+        resultado.innerHTML = '<p style="color:#d4af37">Editando imagen, espera un momento...</p>';
+
+        const formData = new FormData();
+        formData.append('prompt', prompt);
+        formData.append('ratio', ratio);
+        formData.append('imagen', inputImagen.files[0]);
+
+        try {
+            const response = await fetch('/api/editar', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                resultado.innerHTML = `<img src="${data.image}" alt="Imagen editada">`;
+            } else {
+                resultado.innerHTML = `<p style="color:#ff6b6b">Error: ${data.error}</p>`;
+            }
+        } catch (error) {
+            resultado.innerHTML = `<p style="color:#ff6b6b">Error de conexión: ${error.message}</p>`;
+        }
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,231 @@
+/* ===== RESET Y BASE ===== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background-color: #0a1628; /* Azul oscuro */
+    color: #d4af37; /* Dorado */
+    min-height: 100vh;
+    line-height: 1.5;
+}
+
+/* ===== CONTENEDOR PRINCIPAL ===== */
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px 16px;
+}
+
+/* ===== HEADER ===== */
+header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding-top: 10px;
+}
+
+header h1 {
+    font-size: 1.8rem;
+    color: #d4af37;
+    margin-bottom: 8px;
+    font-weight: 700;
+}
+
+.subtitle {
+    color: #b8962e;
+    font-size: 0.95rem;
+}
+
+/* ===== PESTAÑAS ===== */
+.tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 25px;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 12px;
+    background-color: #12233d;
+    color: #d4af37;
+    border: 1px solid #d4af37;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.tab-btn.active {
+    background-color: #d4af37;
+    color: #0a1628;
+}
+
+.tab-btn:hover {
+    background-color: #c9a227;
+    color: #0a1628;
+}
+
+/* ===== SECCIONES ===== */
+.seccion {
+    display: none;
+    background-color: #12233d;
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid #1e3a5f;
+}
+
+.seccion.active {
+    display: block;
+}
+
+.seccion h2 {
+    font-size: 1.3rem;
+    margin-bottom: 20px;
+    color: #d4af37;
+}
+
+/* ===== FORMULARIOS ===== */
+.form-group {
+    margin-bottom: 18px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+textarea, input[type="file"] {
+    width: 100%;
+    padding: 12px;
+    background-color: #0a1628;
+    border: 1px solid #d4af37;
+    border-radius: 8px;
+    color: #d4af37;
+    font-size: 1rem;
+    resize: vertical;
+}
+
+textarea:focus, input[type="file"]:focus {
+    outline: none;
+    border-color: #f0d060;
+    box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2);
+}
+
+textarea::placeholder {
+    color: #8a7326;
+}
+
+/* ===== BOTONES DE FORMATO ===== */
+.formatos {
+    display: flex;
+    gap: 10px;
+}
+
+.formato-btn {
+    flex: 1;
+    padding: 10px;
+    background-color: #0a1628;
+    color: #d4af37;
+    border: 1px solid #d4af37;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.formato-btn.active {
+    background-color: #d4af37;
+    color: #0a1628;
+}
+
+.formato-btn:hover {
+    background-color: #c9a227;
+    color: #0a1628;
+}
+
+/* ===== BOTÓN PRINCIPAL ===== */
+.btn-principal {
+    width: 100%;
+    padding: 14px;
+    background-color: #d4af37;
+    color: #0a1628;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-top: 10px;
+}
+
+.btn-principal:hover {
+    background-color: #f0d060;
+    transform: translateY(-1px);
+}
+
+.btn-principal:active {
+    transform: translateY(0);
+}
+
+/* ===== RESULTADO ===== */
+.resultado {
+    margin-top: 25px;
+    text-align: center;
+}
+
+.resultado img {
+    max-width: 100%;
+    border-radius: 10px;
+    border: 2px solid #d4af37;
+}
+
+/* ===== RESPONSIVE (CELULAR) ===== */
+@media (max-width: 600px) {
+    .container {
+        padding: 16px 12px;
+    }
+
+    header h1 {
+        font-size: 1.5rem;
+    }
+
+    .subtitle {
+        font-size: 0.85rem;
+    }
+
+    .seccion {
+        padding: 16px;
+    }
+
+    .seccion h2 {
+        font-size: 1.15rem;
+    }
+
+    .tab-btn {
+        padding: 11px 8px;
+        font-size: 0.95rem;
+    }
+
+    .formato-btn {
+        padding: 9px 6px;
+        font-size: 0.9rem;
+    }
+
+    .btn-principal {
+        padding: 13px;
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 400px) {
+    .formatos {
+        flex-direction: column;
+    }
+}
