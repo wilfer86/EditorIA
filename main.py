@@ -7,7 +7,6 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, JSONResponse
 from dotenv import load_dotenv
 from google import genai
-from google.genai import types
 from PIL import Image
 
 # Cargar variables de entorno del archivo .env
@@ -22,11 +21,8 @@ templates = Jinja2Templates(directory="templates")
 # Leer tu API KEY unificada (la que empieza por AQ.Ab8)
 api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
 
-# Inicializar el cliente oficial de Google GenAI forzando el canal v1beta para Imagen 3
-client = genai.Client(
-    api_key=api_key,
-    http_options=types.HttpOptions(api_version="v1beta")
-)
+# Inicializar el cliente oficial estable de Google GenAI
+client = genai.Client(api_key=api_key)
 
 # ======================
 # RUTA PRINCIPAL
@@ -45,10 +41,10 @@ async def home(request: Request):
 @app.post("/api/generar")
 async def generar_imagen(prompt: str = Form(...), ratio: str = Form("1:1")):
     try:
-        # Formatos válidos oficiales para Imagen 3: "1:1", "3:4", "4:3", "16:9", "9:16"
+        # Validar formatos compatibles oficiales
         formato_valido = ratio if ratio in ["1:1", "3:4", "4:3", "16:9", "9:16"] else "1:1"
 
-        # Llamada oficial a Imagen 3 usando el entorno v1beta configurado en el cliente
+        # Llamada utilizando el modelo global integrado en la API unificada
         result = client.models.generate_images(
             model='imagen-3.0-generate-002',
             prompt=prompt,
@@ -59,7 +55,7 @@ async def generar_imagen(prompt: str = Form(...), ratio: str = Form("1:1")):
             )
         )
 
-        # Extracción correcta de bytes según la estructura de la nueva SDK google-genai
+        # Acceso directo seguro a la estructura de bytes de la imagen generada
         image_bytes = result.generated_images[0].image.image_bytes
         base64_image = base64.b64encode(image_bytes).decode("utf-8")
         image_url = f"data:image/jpeg;base64,{base64_image}"
@@ -86,11 +82,11 @@ async def editar_imagen(
     imagen: UploadFile = File(...)
 ):
     try:
-        # Leer el archivo que el usuario subió desde la interfaz web
+        # Leer el archivo que el usuario subió
         contenido = await imagen.read()
         pil_image = Image.open(io.BytesIO(contenido))
 
-        # Modificación de imagen mediante inpainting/outpainting
+        # Edición mediante el motor unificado de Imagen
         result = client.models.edit_images(
             model='imagen-3.0-capability-002',
             prompt=prompt,
@@ -101,7 +97,7 @@ async def editar_imagen(
             )
         )
 
-        # Convertir el resultado editado a Base64 para enviarlo al Frontend
+        # Extraer bytes y codificar a Base64 para el Frontend
         image_bytes = result.generated_images[0].image.image_bytes
         base64_image = base64.b64encode(image_bytes).decode("utf-8")
         image_url = f"data:image/jpeg;base64,{base64_image}"
@@ -123,6 +119,5 @@ async def editar_imagen(
 # ======================
 if __name__ == '__main__':
     import uvicorn
-    # Render asigna el puerto automáticamente. Si no existe, usa el 5000 por defecto.
     port = int(os.environ.get("PORT", 5000))
     uvicorn.run("main:app", host="0.0.0.0", port=port, reload=False)
