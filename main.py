@@ -88,7 +88,7 @@ async def editar_imagen(
         contenido = await imagen.read()
         pil_image = Image.open(io.BytesIO(contenido))
 
-        # El modelo de edición de Imagen 3 requiere la foto cargada
+                # Cambia el modelo de edición aquí
         result = client.models.edit_images(
             model='imagen-3.0-capability-002',
             prompt=prompt,
