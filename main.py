@@ -45,9 +45,9 @@ async def generar_imagen(prompt: str = Form(...), ratio: str = Form("1:1")):
         # Forzamos a que si viene un formato extraño, use "1:1"
         formato_valido = ratio if ratio in ["1:1", "3:4", "4:3", "16:9", "9:16"] else "1:1"
 
-        # Llamada oficial a Imagen 3 para generación de imágenes desde texto
+                # Cambia el nombre del modelo aquí
         result = client.models.generate_images(
-            model='imagen-3.0-generate-002',
+            model='imagen-3.0-generate-002',  # Si este falla, el alias oficial es 'imagen-3.0-generate-002'
             prompt=prompt,
             config=dict(
                 number_of_images=1,
