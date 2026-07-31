@@ -1,14 +1,15 @@
+import os
+import io
+import base64
 from fastapi import FastAPI, Request, UploadFile, File, Form
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, JSONResponse
 from dotenv import load_dotenv
-from openai import OpenAI
-import os
-import base64
-import uuid
+from google import genai
+from PIL import Image
 
-# Cargar variables de entorno
+# Cargar variables de entorno del archivo .env
 load_dotenv()
 
 app = FastAPI(title="Editor de Imágenes IA")
@@ -17,11 +18,11 @@ app = FastAPI(title="Editor de Imágenes IA")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
-# Configurar cliente de NVIDIA (compatible con OpenAI)
-client = OpenAI(
-    base_url="https://integrate.api.nvidia.com/v1",
-    api_key=os.getenv("NVIDIA_API_KEY")
-)
+# Leer explícitamente tu API KEY unificada (la que empieza por AQ.Ab8)
+api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+
+# Inicializar el cliente oficial de Google GenAI
+client = genai.Client(api_key=api_key)
 
 # ======================
 # RUTA PRINCIPAL
@@ -40,24 +41,27 @@ async def home(request: Request):
 @app.post("/api/generar")
 async def generar_imagen(prompt: str = Form(...), ratio: str = Form("1:1")):
     try:
-        # Convertir ratio a tamaño aproximado
-        sizes = {
-            "1:1": "1024x1024",
-            "9:16": "768x1344",
-            "16:9": "1344x768"
-        }
-        size = sizes.get(ratio, "1024x1024")
+        # Formatos válidos oficiales para Imagen 3: "1:1", "3:4", "4:3", "16:9", "9:16"
+        # Forzamos a que si viene un formato extraño, use "1:1"
+        formato_valido = ratio if ratio in ["1:1", "3:4", "4:3", "16:9", "9:16"] else "1:1"
 
-        response = client.images.generate(
-            model="qwen/qwen-image",          # Modelo de generación
+        # Llamada oficial a Imagen 3 para generación de imágenes desde texto
+        result = client.models.generate_images(
+            model='imagen-3.0-generate-002',
             prompt=prompt,
-            size=size,
-            n=1
+            config=dict(
+                number_of_images=1,
+                output_mime_type="image/jpeg",
+                aspect_ratio=formato_valido
+            )
         )
 
-        # La respuesta normalmente trae una URL o base64
-        image_url = response.data[0].url
+        # Extraer los bytes binarios y convertirlos a Base64 para el navegador
+        image_bytes = result.generated_images[0].image.image_bytes
+        base64_image = base64.b64encode(image_bytes).decode("utf-8")
+        image_url = f"data:image/jpeg;base64,{base64_image}"
 
+        # Mantenemos exactamente la misma respuesta estructurada que espera tu index.html
         return JSONResponse({
             "success": True,
             "image": image_url
@@ -80,19 +84,25 @@ async def editar_imagen(
     imagen: UploadFile = File(...)
 ):
     try:
-        # Leer la imagen subida
+        # Leer el archivo que el usuario subió desde la interfaz web
         contenido = await imagen.read()
-        imagen_base64 = base64.b64encode(contenido).decode("utf-8")
+        pil_image = Image.open(io.BytesIO(contenido))
 
-        # Nota: Algunos modelos de edición de NVIDIA reciben la imagen en base64
-        response = client.images.edit(
-            model="qwen/qwen-image-edit",     # Modelo de edición
-            image=contenido,
+        # El modelo de edición de Imagen 3 requiere la foto cargada
+        result = client.models.edit_images(
+            model='imagen-3.0-capability-002',
             prompt=prompt,
-            n=1
+            image=pil_image,
+            config=dict(
+                number_of_images=1,
+                output_mime_type="image/jpeg"
+            )
         )
 
-        image_url = response.data[0].url
+        # Convertir el resultado a Base64 para devolverlo al Frontend
+        image_bytes = result.generated_images[0].image.image_bytes
+        base64_image = base64.b64encode(image_bytes).decode("utf-8")
+        image_url = f"data:image/jpeg;base64,{base64_image}"
 
         return JSONResponse({
             "success": True,
@@ -104,3 +114,14 @@ async def editar_imagen(
             "success": False,
             "error": str(e)
         }, status_code=500)
+
+
+# ======================
+# AJUSTE OBLIGATORIO PARA RENDER
+# ======================
+if __name__ == '__main__':
+    import uvicorn
+    # Render asigna el puerto automáticamente. Si no existe, usa el 5000 por defecto.
+    port = int(os.environ.get("PORT", 5000))
+    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=False)
+
