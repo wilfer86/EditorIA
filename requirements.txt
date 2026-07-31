@@ -5,4 +5,4 @@ google-genai
 python-dotenv
 Pillow
 jinja2
-
+requests
